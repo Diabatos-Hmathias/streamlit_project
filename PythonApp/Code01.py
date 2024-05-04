@@ -5,14 +5,13 @@ import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, silhouette_score
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.cluster import KMeans, AgglomerativeClustering
-from sklearn.metrics import silhouette_score
 
-# Φόρτωση Δεδομένων
-uploaded_file = st.file_uploader("Επιλέξτε ένα αρχείο CSV ή Excel", type=["csv", "xlsx"])
+# Load Data
+uploaded_file = st.file_uploader("Select a CSV or Excel file", type=["csv", "xlsx"])
 
 if uploaded_file is not None:
     if uploaded_file.name.endswith('.csv'):
@@ -20,153 +19,181 @@ if uploaded_file is not None:
     elif uploaded_file.name.endswith('.xlsx'):
         data = pd.read_excel(uploaded_file)
     else:
-        st.error("Μη υποστηριζόμενος τύπος αρχείου.")
+        st.error("Unsupported file type.")
 
-    # Προδιαγραφές Πίνακα
-    st.subheader("Προδιαγραφές Πίνακα")
-    st.write("Ο πίνακας δεδομένων έχει διαμορφωθεί ως εξής:")
-    st.write("Γραμμές: Αντιπροσωπεύουν τα {} δείγματα που αποτελούν το σύνολο δεδομένων.".format(data.shape[0]))
-    st.write("Στήλες: Καταγράφουν τα {} χαρακτηριστικά που περιγράφουν κάθε δείγμα.".format(data.shape[1] - 1))
-    st.write("Μεταβλητή Εξόδου: Η στήλη {} περιέχει την ετικέτα (label) για κάθε δείγμα.".format(data.columns[-1]))
+    # Data Specifications
+    st.subheader("Data Specifications")
+    st.write("The dataset has the following specifications:")
+    st.write("Rows: Represent {} samples.".format(data.shape[0]))
+    st.write("Columns: Describe {} features for each sample.".format(data.shape[1] - 1))
+    st.write("Output Variable: The column {} contains the label for each sample.".format(data.columns[-1]))
 
-    # Εμφάνιση των δεδομένων
-    st.subheader("Προβολή των Δεδομένων")
+    # Display Data
+    st.subheader("View Data")
     st.write(data)
 
-    # 2D Visualization Tab
-    st.subheader("2D Visualization Tab")
+    # Streamlit Tabs
+    tabs = st.sidebar.radio("Navigation", ["2D Visualization", "Exploratory Data Analysis", "Comparison", "Info"])
 
-    # Εκτέλεση PCA
-    pca = PCA(n_components=2)
-    pca_result = pca.fit_transform(data.iloc[:, :-1])
+    if tabs == "2D Visualization":
+        # 2D Visualization Tab
+        st.subheader("2D Visualization Tab")
 
-    # Εκτέλεση t-SNE
-    tsne = TSNE(n_components=2, perplexity=30)  # Μπορείτε να προσαρμόσετε την παράμετρο perplexity όπως εσείς θέλετε
-    tsne_result = tsne.fit_transform(data.iloc[:, :-1])
+        # Streamlit Sub-Tabs for PCA and t-SNE Visualization
+        subtabs_2d = st.radio("Select Algorithm To Visualise", ["PCA", "t-SNE"])
 
-    # Οπτικοποίηση PCA
-    st.subheader("PCA Visualization")
-    fig, ax = plt.subplots()
-    sns.scatterplot(x=pca_result[:, 0], y=pca_result[:, 1], hue=data.iloc[:, -1], ax=ax)
-    st.pyplot(fig)
+        if subtabs_2d == "PCA":
+            # PCA Execution
+            pca = PCA(n_components=2)
+            pca_result = pca.fit_transform(data.iloc[:, :-1])
 
-    # Οπτικοποίηση t-SNE
-    st.subheader("t-SNE Visualization")
-    fig, ax = plt.subplots()
-    sns.scatterplot(x=tsne_result[:, 0], y=tsne_result[:, 1], hue=data.iloc[:, -1], ax=ax)
-    st.pyplot(fig)
-
-    # Διαγράμματα EDA
-    st.subheader("Exploratory Data Analysis (EDA)")
-    st.write("Παρακάτω παρουσιάζονται μερικά διαγράμματα EDA για την εξερεύνηση των δεδομένων:")
-
-    # Ιστογράμματα για τα χαρακτηριστικά
-    st.write("Ιστογράμματα για τα χαρακτηριστικά:")
-    for column in data.columns[:-1]:
-        fig, ax = plt.subplots()
-        sns.histplot(data[column], kde=True, ax=ax)
-        ax.set_title(f"Histogram of {column}")
-        st.pyplot(fig)
-
-    # Διαγράμματα boxplot
-    st.write("Διαγράμματα boxplot για τα χαρακτηριστικά:")
-    for column in data.columns[:-1]:
-        fig, ax = plt.subplots()
-        sns.boxplot(y=data[column], ax=ax)
-        ax.set_title(f"Boxplot of {column}")
-        st.pyplot(fig)
-
-    # Add Tabs
-    task = st.sidebar.selectbox("Επιλέξτε τον τύπο εργασίας", ("Κατηγοριοποίηση", "Ομαδοποίηση"))
-
-    if task == "Κατηγοριοποίηση":
-        st.subheader("Αλγόριθμοι Κατηγοριοποίησης")
-        classifier = st.sidebar.selectbox("Επιλέξτε έναν αλγόριθμο κατηγοριοποίησης",
-                                          ("Logistic Regression", "Random Forest"))
-
-        if classifier == "Logistic Regression":
-            # Διαχωρισμός σε χαρακτηριστικά και ετικέτες
-            X = data.iloc[:, :-1]
-            y = data.iloc[:, -1]
-
-            # Διαχωρισμός σε train και test sets
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-            # Εκπαίδευση του μοντέλου
-            model = LogisticRegression()
-            model.fit(X_train, y_train)
-
-            # Πρόβλεψη στο test set
-            y_pred = model.predict(X_test)
-
-            # Αξιολόγηση του μοντέλου
-            st.write("Αποτελέσματα Logistic Regression:")
-            st.write(classification_report(y_test, y_pred))
-
-        elif classifier == "Random Forest":
-            # Διαχωρισμός σε χαρακτηριστικά και ετικέτες
-            X = data.iloc[:, :-1]
-            y = data.iloc[:, -1]
-
-            # Διαχωρισμός σε train και test sets
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-            # Εκπαίδευση του μοντέλου
-            model = RandomForestClassifier()
-            model.fit(X_train, y_train)
-
-            # Πρόβλεψη στο test set
-            y_pred = model.predict(X_test)
-
-            # Αξιολόγηση του μοντέλου
-            st.write("Αποτελέσματα Random Forest:")
-            st.write(classification_report(y_test, y_pred))
-
-    elif task == "Ομαδοποίηση":
-        st.subheader("Αλγόριθμοι Ομαδοποίησης")
-        clustering_algorithm = st.sidebar.selectbox("Επιλέξτε έναν αλγόριθμο ομαδοποίησης",
-                                                    ("KMeans", "Hierarchical Clustering"))
-
-        if clustering_algorithm == "KMeans":
-            # Διαχωρισμός σε χαρακτηριστικά
-            X = data.iloc[:, :-1]
-
-            # Εύρεση του βέλτιστου αριθμού ομάδων με χρήση του silhouette score
-            silhouette_scores = []
-            for n_clusters in range(2, 11):
-                kmeans = KMeans(n_clusters=n_clusters, random_state=42)
-                cluster_labels = kmeans.fit_predict(X)
-                silhouette_avg = silhouette_score(X, cluster_labels)
-                silhouette_scores.append(silhouette_avg)
-
-            optimal_n_clusters = silhouette_scores.index(max(silhouette_scores)) + 2
-
-            # Εκπαίδευση του μοντέλου με τον βέλτιστο αριθμό ομάδων
-            model = KMeans(n_clusters=optimal_n_clusters, random_state=42)
-            cluster_labels = model.fit_predict(X)
-
-            # Αποθήκευση των ετικετών στα δεδομένα
-            data['Cluster'] = cluster_labels
-
-            # Οπτικοποίηση των ομάδων
-            st.subheader("Οπτικοποίηση Ομάδων με KMeans")
+            # PCA Visualization
+            st.subheader("PCA Visualization")
             fig, ax = plt.subplots()
-            sns.scatterplot(x=tsne_result[:, 0], y=tsne_result[:, 1], hue=data['Cluster'], palette='viridis', ax=ax)
+            sns.scatterplot(x=pca_result[:, 0], y=pca_result[:, 1], hue=data.iloc[:, -1], ax=ax)
             st.pyplot(fig)
 
-        elif clustering_algorithm == "Hierarchical Clustering":
-            # Διαχωρισμός σε χαρακτηριστικά
-            X = data.iloc[:, :-1]
+        elif subtabs_2d == "t-SNE":
+            # t-SNE Execution
+            tsne = TSNE(n_components=2, perplexity=30)
+            tsne_result = tsne.fit_transform(data.iloc[:, :-1])
 
-            # Εκτέλεση ιεραρχικής ομαδοποίησης
-            model = AgglomerativeClustering()
-            cluster_labels = model.fit_predict(X)
-
-            # Αποθήκευση των ετικετών στα δεδομένα
-            data['Cluster'] = cluster_labels
-
-            # Οπτικοποίηση των ομάδων
-            st.subheader("Οπτικοποίηση Ομάδων με Ιεραρχική Ομαδοποίηση")
+            # t-SNE Visualization
+            st.subheader("t-SNE Visualization")
             fig, ax = plt.subplots()
-            sns.scatterplot(x=tsne_result[:, 0], y=tsne_result[:, 1], hue=data['Cluster'], palette='viridis', ax=ax)
+            sns.scatterplot(x=tsne_result[:, 0], y=tsne_result[:, 1], hue=data.iloc[:, -1], ax=ax)
             st.pyplot(fig)
+
+    elif tabs == "Exploratory Data Analysis":
+        # Exploratory Data Analysis (EDA) Plots
+        st.subheader("Exploratory Data Analysis (EDA)")
+        st.write("Below are some EDA plots for exploring the data:")
+
+        # Streamlit Sub-Tabs for Histograms and Boxplots
+        subtabs_eda = st.radio("Select EDA Plot Type", ["Histograms", "Boxplots"])
+
+        if subtabs_eda == "Histograms":
+            # Histograms for Features
+            st.write("Histograms for Features:")
+            for column in data.columns[:-1]:
+                fig, ax = plt.subplots()
+                sns.histplot(data[column], kde=True, ax=ax)
+                ax.set_title(f"Histogram of {column}")
+                st.pyplot(fig)
+
+        elif subtabs_eda == "Boxplots":
+            # Boxplots for Features
+            st.write("Boxplots for Features:")
+            for column in data.columns[:-1]:
+                fig, ax = plt.subplots()
+                sns.boxplot(y=data[column], ax=ax)
+                ax.set_title(f"Boxplot of {column}")
+                st.pyplot(fig)
+
+    elif tabs == "Comparison":
+        # t-SNE Execution for Comparison Tab
+        tsne = TSNE(n_components=2, perplexity=30)
+        tsne_result = tsne.fit_transform(data.iloc[:, :-1])
+
+        # Classification Comparison
+        st.subheader("Comparison of Classification Algorithms")
+
+        # Logistic Regression vs. Random Forest
+        st.write("Logistic Regression vs. Random Forest:")
+        regularization_param_lr = st.slider("Regularization Parameter (C) for Logistic Regression", 0.01, 10.0, 1.0)
+        num_estimators_rf = st.slider("Number of Estimators for Random Forest", 1, 100, 10)
+
+        X = data.iloc[:, :-1]
+        y = data.iloc[:, -1]
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+        model_lr = LogisticRegression(C=regularization_param_lr)
+        model_rf = RandomForestClassifier(n_estimators=num_estimators_rf)
+
+        model_lr.fit(X_train, y_train)
+        model_rf.fit(X_train, y_train)
+
+        y_pred_lr = model_lr.predict(X_test)
+        y_pred_rf = model_rf.predict(X_test)
+
+        st.write("Logistic Regression Results:")
+        lr_report = classification_report(y_test, y_pred_lr, output_dict=True)
+        st.write(lr_report)
+
+        st.write("Random Forest Results:")
+        rf_report = classification_report(y_test, y_pred_rf, output_dict=True)
+        st.write(rf_report)
+
+        if lr_report['accuracy'] > rf_report['accuracy']:
+            st.write("Logistic Regression performed better.")
+        elif lr_report['accuracy'] < rf_report['accuracy']:
+            st.write("Random Forest performed better.")
+        else:
+            st.write("Both models performed equally well.")
+
+        # Clustering Comparison
+        st.subheader("Comparison of Clustering Algorithms")
+
+        # K-Means vs. Hierarchical Clustering
+        st.write("K-Means vs. Hierarchical Clustering:")
+        num_clusters_km = st.slider("Number of Clusters (k) for K-Means", 2, 10, 5)
+        num_clusters_hc = st.slider("Number of Clusters for Hierarchical Clustering", 2, 10, 5)
+
+        X = data.iloc[:, :-1]
+
+        model_km = KMeans(n_clusters=num_clusters_km, random_state=42)
+        model_hc = AgglomerativeClustering(n_clusters=num_clusters_hc)
+
+        cluster_labels_km = model_km.fit_predict(X)
+        cluster_labels_hc = model_hc.fit_predict(X)
+
+        silhouette_score_km = silhouette_score(X, cluster_labels_km)
+        silhouette_score_hc = silhouette_score(X, cluster_labels_hc)
+
+        st.write("Silhouette Score for K-Means:", silhouette_score_km)
+        st.write("Silhouette Score for Hierarchical Clustering:", silhouette_score_hc)
+
+        if silhouette_score_km > silhouette_score_hc:
+            st.write("K-Means performed better based on silhouette score.")
+        elif silhouette_score_km < silhouette_score_hc:
+            st.write("Hierarchical Clustering performed better based on silhouette score.")
+        else:
+            st.write("Both clustering algorithms performed equally well based on silhouette score.")
+
+        # Visualization of Clustering Results
+        st.subheader("Visualization of Clustering Results")
+        st.write("Below are scatter plots visualizing the clustering results:")
+
+        # K-Means Visualization
+        st.write("K-Means Clustering Visualization")
+        fig, ax = plt.subplots()
+        sns.scatterplot(x=tsne_result[:, 0], y=tsne_result[:, 1], hue=cluster_labels_km, palette='viridis', ax=ax)
+        st.pyplot(fig)
+
+        # Hierarchical Clustering Visualization
+        st.write("Hierarchical Clustering Visualization")
+        fig, ax = plt.subplots()
+        sns.scatterplot(x=tsne_result[:, 0], y=tsne_result[:, 1], hue=cluster_labels_hc, palette='viridis', ax=ax)
+        st.pyplot(fig)
+
+    #info tab
+    elif tabs == "Info":
+        st.subheader("About This Application")
+        st.write("This web-based application is designed for data mining and analysis.")
+        st.write("It allows users to load tabular data, perform 2D visualizations, conduct exploratory data analysis, and compare classification and clustering algorithms.")
+
+        st.subheader("How It Works")
+        st.write("Users can upload CSV or Excel files containing their data.")
+        st.write("Then, they can navigate between different tabs to visualize data, explore its distribution, and compare machine learning algorithms.")
+
+        st.subheader("Development Team")
+        st.write("This application was developed by [Diabatos Hmathias].")
+        st.write("Team Members:")
+        st.write("- Member 1: [Ευφραιμίδης Χρήστος]")
+        st.write("- Member 2: [Πυρινός Παύλος]")
+
+        st.subheader("Tasks Performed")
+        st.write("Each team member contributed to different aspects of the project.")
+        st.write("- Ευφραιμίδης Χρήστος: tbd")
+        st.write("- Πυρινός Παύλος: tbd")
+
