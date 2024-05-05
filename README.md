@@ -8,7 +8,7 @@
 1. Make sure you have [Docker](https://www.docker.com/) installed on your computer.
 2. Download or clone this repository on your machine locally.
 3. Navigate to the folder "PythonApp" folder through cmd or Powershell on Windows (or the Terminal in Linux).
-4.  Run '''docker build -t streamlit-app .'''.
-5.  Run ' docker run -p 8501:8501 streamlit-app'.
+4.  Run ```docker build -t streamlit-app .```.
+5.  Run ```docker run -p 8501:8501 streamlit-app```.
 6.  Go to your browser and connect to http://localhost:8501/.
    
