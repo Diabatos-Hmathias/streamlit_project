@@ -194,6 +194,6 @@ if uploaded_file is not None:
 
         st.subheader("Tasks Performed")
         st.write("Each team member contributed to different aspects of the project.")
-        st.write("- Ευφραιμίδης Χρήστος: tbd")
-        st.write("- Πυρινός Παύλος: tbd")
-
+        st.write("- Ευφραιμίδης Χρήστος: Data handling,2D Visualisation, Docker setup,Github version control")
+        st.write("- Πυρινός Παύλος: Machine learning algorithms comparison,Latex report,Uml diagram,"
+                 "Software release life cycle")
