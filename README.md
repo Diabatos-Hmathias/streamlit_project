@@ -16,3 +16,8 @@
 [1](https://github.com/Diabatos-Hmathias/streamlit_project/pull/1)
 [2](https://github.com/Diabatos-Hmathias/streamlit_project/pull/2)
 [3](https://github.com/Diabatos-Hmathias/streamlit_project/pull/3)
+
+
+# Students
+ Ευφραιμίδης Χρήστος *inf2021051*
+ Πυρινός Παύλος *inf2021191*
