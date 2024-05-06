@@ -13,6 +13,6 @@
 6.  Go to your browser and connect to http://localhost:8501/
    
 # Proof of collaboration through GitHub
-[1.](https://github.com/Diabatos-Hmathias/streamlit_project/pull/1)
-[2.](https://github.com/Diabatos-Hmathias/streamlit_project/pull/2)
-[3.](https://github.com/Diabatos-Hmathias/streamlit_project/pull/3)
+[1](https://github.com/Diabatos-Hmathias/streamlit_project/pull/1)
+[2](https://github.com/Diabatos-Hmathias/streamlit_project/pull/2)
+[3](https://github.com/Diabatos-Hmathias/streamlit_project/pull/3)
